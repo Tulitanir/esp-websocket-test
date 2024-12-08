@@ -93,6 +93,11 @@ void setup()
               String path = request->url();
               serveFile(request, path, "text/javascript"); });
 
+  server.on("/favicon/*", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              String path = request->url();
+              serveFile(request, path, "image/png"); });
+
   server.onNotFound([](AsyncWebServerRequest *request)
                     {
                       Serial.printf("Unhandled request: %s\n", request->url().c_str());
