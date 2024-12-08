@@ -15,6 +15,23 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
+void serveFile(AsyncWebServerRequest *request, const String &path, const String &contentType)
+{
+  if (SPIFFS.exists(path))
+  {
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path, contentType);
+    response->addHeader("Cross-Origin-Opener-Policy", "same-origin");
+    response->addHeader("Cross-Origin-Embedder-Policy", "require-corp");
+    request->send(response);
+    Serial.printf("Served file: %s\n", path.c_str());
+  }
+  else
+  {
+    Serial.printf("File not found: %s\n", path.c_str());
+    request->send(404, "text/plain", "File not found");
+  }
+}
+
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
                       void *arg, uint8_t *data, size_t len)
 {
@@ -63,26 +80,23 @@ void setup()
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
 
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { serveFile(request, "/index.html", "text/html"); });
+
+  server.on("/ffmpeg/*", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              String path = request->url();
+              serveFile(request, path, "text/javascript"); });
+
+  server.on("/assets/*", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              String path = request->url();
+              serveFile(request, path, "text/javascript"); });
 
   server.onNotFound([](AsyncWebServerRequest *request)
                     {
-    if (request->url().startsWith("/ffmpeg/"))
-    {
-      String fileName = request->url() + ".js";
-      if (SPIFFS.exists(fileName))
-      {
-        request->send(SPIFFS, fileName, "text/javascript");
-      }
-      else
-      {
-        request->send(404, "text/plain", "File not found");
-      }
-    }
-    else
-    {
-      request->send(404, "text/plain", "Not Found");
-    } });
+                      Serial.printf("Unhandled request: %s\n", request->url().c_str());
+                      request->send(404, "text/plain", "Not Found"); });
 
   server.begin();
 }
