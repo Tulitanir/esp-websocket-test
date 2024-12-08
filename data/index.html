@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>WebSocket Binary Example</title>
-    <script src="script.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Frame Sender</title>
 </head>
 
 <body>
-    <h1>ESP32 WebSocket Binary Data</h1>
-    <button onclick="sendBinaryData()">Send Binary Data</button>
+    <h1>Upload and Process Video</h1>
+    <input type="file" id="videoInput" accept="video/*">
+    <canvas id="frameCanvas" width="128" height="64" style="display: none;"></canvas>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@ffmpeg.wasm/main@0.13.1/dist/index.global.min.js"></script> -->
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>
